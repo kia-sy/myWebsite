@@ -9,12 +9,39 @@ let note = { dom: null, offsetX: 0, offsetY: 0 }
 let note2 = { dom: null, offsetX: 0, offsetY: 0 }
 let note3 = { dom: null, offsetX: 0, offsetY: 0 }
 
+// ─── SHARED LIMIT LOGIC ───────────────────────────────────────────────
+function getLimits(noteObj, x, y) {
+    const container = document.querySelector('main')
+    const containerRect = container.getBoundingClientRect()
+    const windowRect = noteObj.dom.getBoundingClientRect()
+
+    let newLeft = x - noteObj.offsetX
+    let newTop = y - noteObj.offsetY
+
+    // LEFT — allow half the window to go off the left edge
+    if (newLeft < containerRect.left - windowRect.width / 2)
+        newLeft = containerRect.left - windowRect.width / 2
+
+    // RIGHT — keep at least half the window visible
+    if (newLeft + windowRect.width / 2 > containerRect.right)
+        newLeft = containerRect.right - windowRect.width / 4
+
+    // TOP — don't go above top of main
+    if (newTop < containerRect.top - noteObj.dom.getBoundingClientRect().height)
+        newTop = containerRect.top - noteObj.dom.getBoundingClientRect().height 
+
+    // BOTTOM — keep title bar visible
+    if (newTop + 40 > containerRect.bottom)
+        newTop = containerRect.bottom - 40
+
+    return { newLeft, newTop }
+}
+
 // ─── TOUCH DRAG ───────────────────────────────────────────────────────
 function enableTouchDrag(windowEl, noteObj) {
     windowEl.addEventListener('touchstart', (e) => {
         const rect = windowEl.getBoundingClientRect()
         const touch = e.touches[0]
-        // only drag if touching the green title bar (top 40px)
         if (touch.clientY - rect.top > 40) return
         e.preventDefault()
         noteObj.dom = windowEl
@@ -25,20 +52,8 @@ function enableTouchDrag(windowEl, noteObj) {
     windowEl.addEventListener('touchmove', (e) => {
         if (!noteObj.dom) return
         e.preventDefault()
-
         const touch = e.touches[0]
-        const container = document.querySelector('main')
-        const containerRect = container.getBoundingClientRect()
-        const windowRect = windowEl.getBoundingClientRect()
-
-        let newLeft = touch.clientX - noteObj.offsetX
-        let newTop = touch.clientY - noteObj.offsetY
-
-        if (newLeft < containerRect.left - 80) newLeft = containerRect.left - 80
-        if (newLeft + windowRect.width > containerRect.right) newLeft = containerRect.right - windowRect.width
-        if (newTop < containerRect.top - 285) newTop = containerRect.top - 285
-        if (newTop + 42.5 > containerRect.bottom) newTop = containerRect.bottom - 42.5
-
+        const { newLeft, newTop } = getLimits(noteObj, touch.clientX, touch.clientY)
         windowEl.style.left = newLeft + "px"
         windowEl.style.top = newTop + "px"
     }, { passive: false })
@@ -83,20 +98,19 @@ iconOne.onclick = () => {
                             <p id="langpr">Language Proficiency:</p>
                             <p id="lang">Tagalog & English</p>
                         </div>
-
                         <div class="secpage">
-                        <p id="ti">OTHER INTEREST</p>
-                        <div class="interest">
-                            <p><li>game development</li></p>
-                            <p><li>playing intruments</li></p>
-                            <p><li>explore sports</li></p>
-                            <p><li>learn random stuffs</li></p>
-                        </div>
-                        <p id="pi">EDUCATION</p>
-                        <div class="educ">
-                            <p><li>STEM graduate</li></p>
-                            <p><li>currently taking Bachelor of Science in Computer Science</li></p>
-                        </div>
+                            <p id="ti">OTHER INTEREST</p>
+                            <div class="interest">
+                                <p><li>game development</li></p>
+                                <p><li>playing intruments</li></p>
+                                <p><li>explore sports</li></p>
+                                <p><li>learn random stuffs</li></p>
+                            </div>
+                            <p id="pi">EDUCATION</p>
+                            <div class="educ">
+                                <p><li>STEM graduate</li></p>
+                                <p><li>currently taking Bachelor of Science in Computer Science</li></p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -197,7 +211,6 @@ document.addEventListener('click', (event) => {
         event.target.closest('.taby3').remove()
 })
 
-// same but for touch on mobile
 document.addEventListener('touchend', (event) => {
     if (event.target.classList.contains('close'))
         event.target.closest('.mePage').remove()
@@ -209,18 +222,7 @@ document.addEventListener('touchend', (event) => {
 
 // ─── MOUSE DRAG ───────────────────────────────────────────────────────
 function applyLimits(noteObj, x, y) {
-    const container = document.querySelector('main')
-    const containerRect = container.getBoundingClientRect()
-    const windowRect = noteObj.dom.getBoundingClientRect()
-
-    let newLeft = x - noteObj.offsetX
-    let newTop = y - noteObj.offsetY
-
-    if (newLeft < containerRect.left - 310) newLeft = containerRect.left - 310
-    if (newLeft + windowRect.width > containerRect.right) newLeft = containerRect.right - windowRect.width
-    if (newTop < containerRect.top - 157) newTop = containerRect.top - 157
-    if (newTop + 42.5 > containerRect.bottom) newTop = containerRect.bottom - 42.5
-
+    const { newLeft, newTop } = getLimits(noteObj, x, y)
     noteObj.dom.style.left = newLeft + "px"
     noteObj.dom.style.top = newTop + "px"
 }
